@@ -1,6 +1,6 @@
 @echo off
 
-nuget restore -PackagesDirectory packages
+nuget restore
 msbuild
 
 md artifacts

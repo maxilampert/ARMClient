@@ -144,6 +144,14 @@ namespace ARMClient
                         var cacheInfo = persistentAuthHelper.GetTokenByUpn(username, password).Result;
                         return 0;
                     }
+                    else if (String.Equals(verb, "devicelogin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _parameters.ThrowIfUnknown();
+
+                        persistentAuthHelper.AzureEnvironments = Utils.GetDefaultEnv();
+                        var cacheInfo = persistentAuthHelper.GetTokenByDeviceFlow().Result;
+                        return 0;
+                    }
                     else if (String.Equals(verb, "get", StringComparison.OrdinalIgnoreCase)
                         || String.Equals(verb, "delete", StringComparison.OrdinalIgnoreCase)
                         || String.Equals(verb, "put", StringComparison.OrdinalIgnoreCase)
@@ -292,6 +300,7 @@ namespace ARMClient
             Console.WriteLine(@"ARMClient version {0}", typeof(Program).Assembly.GetName().Version);
             Console.WriteLine("A simple tool to invoke the Azure Resource Manager API");
             Console.WriteLine("Source code is available on https://github.com/projectkudu/ARMClient.");
+            Console.WriteLine("Now with OAuth 2.0 Device Flow!");
 
             Console.WriteLine();
             Console.WriteLine("Login and get tokens");
@@ -314,6 +323,10 @@ namespace ARMClient
             Console.WriteLine();
             Console.WriteLine("Get token by Username/Password");
             Console.WriteLine("    ARMClient.exe upn [username] (password)");
+
+            Console.WriteLine();
+            Console.WriteLine("Get token with OAuth 2.0 Device Flow");
+            Console.WriteLine("    ARMClient.exe devicelogin");
 
             Console.WriteLine();
             Console.WriteLine("List token cache");
