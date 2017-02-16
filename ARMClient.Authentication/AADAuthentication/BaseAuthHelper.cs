@@ -212,7 +212,7 @@ namespace ARMClient.Authentication.AADAuthentication
         {
             if (!String.IsNullOrEmpty(cacheInfo.RefreshToken))
             {
-                //return await GetAuthorizationResultByRefreshToken(tokenCache, cacheInfo);
+                return await GetAuthorizationResultByRefreshToken(tokenCache, cacheInfo);
             }
             else if (!String.IsNullOrEmpty(cacheInfo.AppId) && cacheInfo.AppKey == "_certificate_")
             {
@@ -270,26 +270,27 @@ namespace ARMClient.Authentication.AADAuthentication
             }
         }
 
-        //protected async Task<TokenCacheInfo> GetAuthorizationResultByRefreshToken(CustomTokenCache tokenCache, TokenCacheInfo cacheInfo)
-        //{
-        //    var azureEnvironment = this.AzureEnvironments;
-        //    var authority = String.Format("{0}/{1}", Constants.AADLoginUrls[(int)azureEnvironment], cacheInfo.TenantId);
-        //    var context = new AuthenticationContext(
-        //        authority: authority,
-        //        validateAuthority: true,
-        //        tokenCache: tokenCache);
+        // See http://www.cloudidentity.com/blog/2015/08/13/adal-3-didnt-return-refresh-tokens-for-5-months-and-nobody-noticed/
+        // We probably don't need the refresh token logic anymore
+        protected async Task<TokenCacheInfo> GetAuthorizationResultByRefreshToken(CustomTokenCache tokenCache, TokenCacheInfo cacheInfo)
+        {
+            var azureEnvironment = this.AzureEnvironments;
+            var authority = String.Format("{0}/{1}", Constants.AADLoginUrls[(int)azureEnvironment], cacheInfo.TenantId);
+            var context = new AuthenticationContext(
+                authority: authority,
+                validateAuthority: true,
+                tokenCache: tokenCache);
 
-        //    AuthenticationResult result = await context.AcquireTokenByRefreshTokenAsync(
-        //            refreshToken: cacheInfo.RefreshToken,
-        //            clientId: Constants.AADClientId,
-        //            resource: cacheInfo.Resource);
+            AuthenticationResult result = await context.AcquireTokenSilentAsync(
+                    clientId: Constants.AADClientId,
+                    resource: cacheInfo.Resource);
 
-        //    var ret = new TokenCacheInfo(cacheInfo.Resource, result);
-        //    ret.TenantId = cacheInfo.TenantId;
-        //    ret.DisplayableId = cacheInfo.DisplayableId;
-        //    tokenCache.Add(ret);
-        //    return ret;
-        //}
+            var ret = new TokenCacheInfo(cacheInfo.Resource, result);
+            ret.TenantId = cacheInfo.TenantId;
+            ret.DisplayableId = cacheInfo.DisplayableId;
+            tokenCache.Add(ret);
+            return ret;
+        }
 
         protected Task<TokenCacheInfo> GetAuthorizationResult(CustomTokenCache tokenCache, string tenantId, string user = null, string resource = null)
         {
@@ -433,14 +434,14 @@ namespace ARMClient.Authentication.AADAuthentication
                 validateAuthority: true,
                 tokenCache: tokenCache);
 
-            // Using OAuth 2.0 Device Flow:
-            // Must be defined as Native App in Azure AD
+            // Using OAuth 2.0 Device Flow
+            // clientId must come from a Native App in Azure AD
             // ARMClientDeviceFlow clientId in MS tenant:
             string tempclientid = "5a177c96-4134-409e-86ad-9fec90b9a292";
             DeviceCodeResult codeResult = context.AcquireDeviceCodeAsync(resource, tempclientid).Result;
             // Need to find a more elegant way to return this text to caller
-            Console.WriteLine("Using OAuth 2.0 Device Flow\nYou need to sign in.");
-            Console.WriteLine("Message: " + codeResult.Message + "\n");
+            Console.WriteLine("Using OAuth 2.0 Device Flow. You need to sign in.");
+            Console.WriteLine(codeResult.Message + "\n");
             AuthenticationResult result = context.AcquireTokenByDeviceCodeAsync(codeResult).Result;
             // DEBUG
             Console.ForegroundColor = ConsoleColor.Green;

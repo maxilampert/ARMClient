@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
@@ -8,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ARMClient
 {
@@ -53,25 +52,30 @@ namespace ARMClient
             return await HttpPost(tenantId, payload);
         }
 
+        // This needs work to get going again
         static string GetClientAssertion(string tenantId, string clientId, X509Certificate2 cert)
         {
             var claims = new List<Claim>();
             claims.Add(new Claim("sub", clientId));
 
-            var handler = new JwtSecurityTokenHandler();
-            var credentials = new X509SigningCredentials(cert);
-            Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor tokenDescriptor = new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor();
-            //return handler.CreateToken(
-            //    issuer: clientId,
-            //    audience: String.Format(TokenEndpoint, tenantId),
-            //    subject: new ClaimsIdentity(claims),
-            //    signingCredentials: credentials).RawData;
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var credentials = new System.IdentityModel.Tokens.X509SigningCredentials(cert);
 
-            return String.Empty; // handler.CreateToken(tokenDescriptor);
+            SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Issuer = clientId,
+                Audience = String.Format(TokenEndpoint, tenantId),
+                Subject = new ClaimsIdentity(claims),
+                //SigningCredentials = credentials
+            };
+
+            //return handler.CreateToken(td);
+            return String.Empty;
         }
 
         static async Task<OAuthToken> HttpPost(string tenantId, string payload)
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (var client = new HttpClient())
             {
                 var address = String.Format(TokenEndpoint, tenantId);
