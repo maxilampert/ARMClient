@@ -183,8 +183,7 @@ namespace ARMClient.Authentication.AADAuthentication
             this.TenantStorage.ClearCache();
 
             var tokenCache = new CustomTokenCache();
-            // 72f988bf-86f1-41af-91ab-2d7cd011db47 = MS tenant id
-            var cacheInfo = GetAuthorizationResultByDeviceFlow(tokenCache, "72f988bf-86f1-41af-91ab-2d7cd011db47", Constants.CSMResources[(int)AzureEnvironments]);
+            var cacheInfo = GetAuthorizationResultByDeviceFlow(tokenCache, "common", Constants.CSMResources[(int)AzureEnvironments]);
 
             var tenantCache = await GetTokenForTenants(tokenCache, cacheInfo);
 
