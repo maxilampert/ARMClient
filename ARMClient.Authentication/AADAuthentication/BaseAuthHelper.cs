@@ -532,7 +532,7 @@ namespace ARMClient.Authentication.AADAuthentication
                 return tcs.Task;
             }
 
-            var thread = new Thread(async() =>
+            var thread = new Thread(async () =>
             {
                 try
                 {
@@ -553,7 +553,7 @@ namespace ARMClient.Authentication.AADAuthentication
                                 resource: resource,
                                 clientId: Constants.AADClientId,
                                 redirectUri: new Uri(Constants.AADRedirectUri),
-                                parameters : new PlatformParameters(PromptBehavior.Never),
+                                parameters: new PlatformParameters(PromptBehavior.Never),
                                 userId: new UserIdentifier(user, UserIdentifierType.OptionalDisplayableId));
 #endif
 #if NETCOREAPP2_0
@@ -682,8 +682,7 @@ namespace ARMClient.Authentication.AADAuthentication
                 authority: authority,
                 validateAuthority: true,
                 tokenCache: tokenCache);
-            //var credential = new UserCredential(username, password);
-            var credential = new UserCredential(username);
+            var credential = new UserPasswordCredential(username, password);
             var result = context.AcquireTokenAsync(resource, Constants.AADClientId, credential);
 
             var cacheInfo = new TokenCacheInfo(resource, result.Result);
