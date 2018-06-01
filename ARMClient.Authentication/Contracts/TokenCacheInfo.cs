@@ -22,7 +22,7 @@ namespace ARMClient.Authentication.Contracts
             AccessToken = result.AccessToken;
             DisplayableId = result.UserInfo == null ? null : result.UserInfo.DisplayableId;
             ExpiresOn = result.ExpiresOn;
-            RefreshToken = result.RefreshToken;
+            //RefreshToken = result.RefreshToken;
             Resource = resource;
             TenantId = result.TenantId;
         }

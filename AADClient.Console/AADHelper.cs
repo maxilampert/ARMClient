@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 
 namespace ARMClient
@@ -58,12 +60,18 @@ namespace ARMClient
             claims.Add(new Claim("sub", clientId));
 
             var handler = new JwtSecurityTokenHandler();
-            var credentials = new X509SigningCredentials(cert);
-            return handler.CreateToken(
-                issuer: clientId,
-                audience: String.Format(TokenEndpoint, tenantId), 
-                subject: new ClaimsIdentity(claims), 
-                signingCredentials: credentials).RawData;
+            var credentials = new X509SecurityKey(cert);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Issuer = clientId,
+                Audience = String.Format(TokenEndpoint, tenantId),
+                SigningCredentials = new SigningCredentials(credentials, SecurityAlgorithms.RsaSha256Signature)
+            };
+
+            var token = handler.CreateToken(tokenDescriptor);
+            return handler.WriteToken(token);
         }
 
         static async Task<OAuthToken> HttpPost(string tenantId, string payload)

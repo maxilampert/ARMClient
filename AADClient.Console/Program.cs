@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+//using System.Windows.Forms;
 using ARMClient.Authentication;
 using ARMClient.Authentication.AADAuthentication;
 using ARMClient.Authentication.Contracts;
@@ -22,7 +22,7 @@ namespace ARMClient
         [STAThread]
         static int Main(string[] args)
         {
-            Utils.SetTraceListener(new ConsoleTraceListener());
+            //Utils.SetTraceListener(new ConsoleTraceListener());
             try
             {
                 var persistentAuthHelper = new PersistentAuthHelper();
@@ -74,7 +74,7 @@ namespace ARMClient
                         var info = certificate != null ?
                             AADHelper.AcquireTokenByX509(tenantId, appId, certificate).Result :
                             AADHelper.AcquireTokenBySPN(tenantId, appId, appKey).Result;
-                        Clipboard.SetText(info.access_token);
+                        //Clipboard.SetText(info.access_token);
                         DumpClaims(info.access_token);
                         Console.WriteLine();
                         Console.WriteLine("Token copied to clipboard successfully.");
