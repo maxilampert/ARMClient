@@ -421,6 +421,22 @@ namespace ARMClient.Authentication.AADAuthentication
             return cacheInfo;
         }
 
+        public async Task<TokenCacheInfo> GetTokenByDeviceFlow()
+        {
+            this.TokenStorage.ClearCache();
+            this.TenantStorage.ClearCache();
+
+            var tokenCache = new CustomTokenCache();
+            var cacheInfo = GetAuthorizationResultByDeviceFlow(tokenCache, "common", Constants.CSMResources[(int)AzureEnvironments]);
+
+            var tenantCache = await GetTokenForTenants(tokenCache, cacheInfo);
+
+            this.TokenStorage.SaveCache(tokenCache);
+            this.TenantStorage.SaveCache(tenantCache);
+
+            return cacheInfo;
+
+        }
         protected async Task<TokenCacheInfo> GetRecentToken(string resource)
         {
             TokenCacheInfo cacheInfo = this.TokenStorage.GetRecentToken(resource);
@@ -682,7 +698,12 @@ namespace ARMClient.Authentication.AADAuthentication
                 authority: authority,
                 validateAuthority: true,
                 tokenCache: tokenCache);
+#if NET471
             var credential = new UserPasswordCredential(username, password);
+#endif
+#if NETCOREAPP2_0
+            var credential = new UserCredential(username);
+#endif
             var result = context.AcquireTokenAsync(resource, Constants.AADClientId, credential);
 
             var cacheInfo = new TokenCacheInfo(resource, result.Result);
@@ -690,6 +711,49 @@ namespace ARMClient.Authentication.AADAuthentication
             return cacheInfo;
         }
 
+        protected TokenCacheInfo GetAuthorizationResultByDeviceFlow(CustomTokenCache tokenCache, string tenantId, string resource)
+        {
+            TokenCacheInfo found;
+            if (tokenCache.TryGetValue(tenantId, resource, out found))
+            {
+                return found;
+            }
+
+            var azureEnvironment = this.AzureEnvironments;
+            var authority = String.Format("{0}/{1}", Constants.AADLoginUrls[(int)azureEnvironment], tenantId);
+            var context = new AuthenticationContext(
+                authority: authority,
+                validateAuthority: true,
+                tokenCache: tokenCache);
+
+            // Using OAuth 2.0 Device Flow:
+            // clientId must come from a Native App in Azure AD
+            // ARMClientDeviceFlow clientId in MS tenant:
+            string tempclientid = "5a177c96-4134-409e-86ad-9fec90b9a292";
+            TokenCacheInfo cacheInfo = null;
+            try
+            {
+                DeviceCodeResult codeResult = context.AcquireDeviceCodeAsync(resource, tempclientid).Result;
+                // Need to find a more elegant way to return this text to caller
+                Console.WriteLine("You need to sign in.");
+                Console.WriteLine("Message: " + codeResult.Message + "\n");
+                AuthenticationResult result = context.AcquireTokenByDeviceCodeAsync(codeResult).Result;
+                // DEBUG
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Got {0} token from Device Flow: {1}..", result.AccessTokenType, result.AccessToken.Substring(0, 20));
+                Console.ResetColor();
+
+                cacheInfo = new TokenCacheInfo(resource, result);
+                tokenCache.Add(cacheInfo);
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine("Something went wrong.");
+                Console.WriteLine("Message: " + exc.Message + "\n");
+            }
+            
+           return cacheInfo;
+        }
         protected async Task<Dictionary<string, TenantCacheInfo>> GetTokenForTenants(CustomTokenCache tokenCache, TokenCacheInfo cacheInfo,
             string appId = null, string appKey = null, string username = null, string password = null)
         {

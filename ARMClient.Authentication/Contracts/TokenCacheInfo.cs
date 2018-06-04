@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace ARMClient.Authentication.Contracts
 {
     public class TokenCacheInfo
     {
+        private Task<AuthenticationResult> result;
         public TokenCacheInfo()
         {
         }
@@ -25,6 +27,21 @@ namespace ARMClient.Authentication.Contracts
             //RefreshToken = result.RefreshToken;
             Resource = resource;
             TenantId = result.TenantId;
+        }
+
+        public TokenCacheInfo(string tenantId, string appId, string appKey, string resource, Task<AuthenticationResult> result)
+        {
+            TenantId = tenantId;
+            AppId = appId;
+            AppKey = appKey;
+            Resource = resource;
+            this.result = result;
+        }
+
+        public TokenCacheInfo(string resource, Task<AuthenticationResult> result)
+        {
+            Resource = resource;
+            this.result = result;
         }
 
         public string AppId { get; set; }

@@ -167,6 +167,14 @@ namespace ARMClient
                         var cacheInfo = persistentAuthHelper.GetTokenByUpn(username, password).Result;
                         return 0;
                     }
+                    else if (String.Equals(verb, "devicelogin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _parameters.ThrowIfUnknown();
+
+                        persistentAuthHelper.AzureEnvironments = Utils.GetDefaultEnv();
+                        var cacheInfo = persistentAuthHelper.GetTokenByDeviceFlow().Result;
+                        return 0;
+                    }
                     else if (String.Equals(verb, "get", StringComparison.OrdinalIgnoreCase)
                         || String.Equals(verb, "delete", StringComparison.OrdinalIgnoreCase)
                         || String.Equals(verb, "put", StringComparison.OrdinalIgnoreCase)
@@ -342,6 +350,10 @@ namespace ARMClient
             Console.WriteLine();
             Console.WriteLine("Get token by Username/Password");
             Console.WriteLine("    ARMClient.exe upn [username] (password)");
+
+            Console.WriteLine();
+            Console.WriteLine("Get token by Device Flow");
+            Console.WriteLine("    ARMClient.exe devicelogin");
 
             Console.WriteLine();
             Console.WriteLine("List token cache");
